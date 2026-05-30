@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                     String         @id @default(uuid())
+  googleId               String?        @unique
+  email                  String         @unique
+  name                   String
+  avatar                 String?
+  role                   Role           @default(CLIENT)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  displayName            String?
+  lastLogin              DateTime?      @default(now())
+  patientAssignments     Assignment[]   @relation("PatientAssignments")
+  therapistAssignments   Assignment[]   @relation("TherapistAssignments")
+  clientConversations    Conversation[] @relation("ClientConversations")
+  therapistConversations Conversation[] @relation("TherapistConversations")
+  messages               Message[]
+}
+
+model Conversation {
+  id          String    @id @default(uuid())
+  therapistId String
+  clientId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  client      User      @relation("ClientConversations", fields: [clientId], references: [id])
+  therapist   User      @relation("TherapistConversations", fields: [therapistId], references: [id])
+  messages    Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
+}
+
+model Assignment {
+  id                 String   @id @default(uuid())
+  patientId          String
+  therapistId        String
+  createdAt          DateTime @default(now())
+  patientVisibleName String?
+  adminLabel         String?
+  patient            User     @relation("PatientAssignments", fields: [patientId], references: [id])
+  therapist          User     @relation("TherapistAssignments", fields: [therapistId], references: [id])
+
+  @@unique([patientId, therapistId])
+}
+
+model WhitelistedUser {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  role        Role     @default(CLIENT)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  displayName String?
+}
+
+model SystemConfig {
+  id                     String   @id @default("global-config")
+  clientWelcomeMessage   String   @default("Hi there! Welcome to Tapfere. 🌿 We're so glad you're here. We are currently reviewing your profile and will assign a specialized physiotherapist to you shortly. In the meantime, feel free to explore our resources!")
+  therapistWelcomeMessage String   @default("Welcome to the Tapfere clinical team! 🩺 We're excited to have you on board. This channel will serve as your direct line for clinical updates, platform announcements, and administrative support. We'll notify you here as soon as your first patients are assigned!")
+  updatedAt              DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  THERAPIST
+  CLIENT
+}
