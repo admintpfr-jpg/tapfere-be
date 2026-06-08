@@ -68,10 +68,10 @@ model WhitelistedUser {
 }
 
 model SystemConfig {
-  id                     String   @id @default("global-config")
-  clientWelcomeMessage   String   @default("Hi there! Welcome to Tapfere. 🌿 We're so glad you're here. We are currently reviewing your profile and will assign a specialized physiotherapist to you shortly. In the meantime, feel free to explore our resources!")
+  id                      String   @id @default("global-config")
+  clientWelcomeMessage    String   @default("Hi there! Welcome to Tapfere. 🌿 We're so glad you're here. We are currently reviewing your profile and will assign a specialized physiotherapist to you shortly. In the meantime, feel free to explore our resources!")
   therapistWelcomeMessage String   @default("Welcome to the Tapfere clinical team! 🩺 We're excited to have you on board. This channel will serve as your direct line for clinical updates, platform announcements, and administrative support. We'll notify you here as soon as your first patients are assigned!")
-  updatedAt              DateTime @updatedAt
+  updatedAt               DateTime @updatedAt
 }
 
 enum Role {

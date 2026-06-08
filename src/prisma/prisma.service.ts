@@ -11,7 +11,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     let sslConfig: any = undefined;
 
     if (connectionString) {
-      isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+      isLocal =
+        connectionString.includes('localhost') ||
+        connectionString.includes('127.0.0.1');
       if (!isLocal) {
         sslConfig = { rejectUnauthorized: false };
         try {

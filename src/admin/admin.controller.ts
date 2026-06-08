@@ -16,13 +16,28 @@ export class AdminSystemController {
   }
 
   @Post('config')
-  updateConfig(@Body() data: { clientWelcomeMessage?: string; therapistWelcomeMessage?: string }) {
+  updateConfig(
+    @Body()
+    data: {
+      clientWelcomeMessage?: string;
+      therapistWelcomeMessage?: string;
+    },
+  ) {
     return this.adminService.updateConfig(data);
   }
 
   @Post('announce')
-  broadcast(@Body() data: { content: string; targetRole: 'ALL' | 'CLIENT' | 'THERAPIST' }) {
-    return this.adminService.broadcastAnnouncement(data.content, data.targetRole);
+  broadcast(
+    @Body()
+    data: {
+      content: string;
+      targetRole: 'ALL' | 'CLIENT' | 'THERAPIST';
+    },
+  ) {
+    return this.adminService.broadcastAnnouncement(
+      data.content,
+      data.targetRole,
+    );
   }
 
   @Get('support/conversations')
@@ -31,7 +46,10 @@ export class AdminSystemController {
   }
 
   @Post('support/conversations/:id/messages')
-  sendSupportMessage(@Param('id') id: string, @Body() data: { content: string }) {
+  sendSupportMessage(
+    @Param('id') id: string,
+    @Body() data: { content: string },
+  ) {
     return this.adminService.sendSupportMessage(id, data.content);
   }
 }

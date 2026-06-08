@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Delete, Patch, Body, Param, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Patch,
+  Body,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -38,7 +48,10 @@ export class UsersController {
   @Patch('whitelist/:id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('ADMIN')
-  async updateWhitelistedUserRole(@Param('id') id: string, @Body('role') role: string) {
+  async updateWhitelistedUserRole(
+    @Param('id') id: string,
+    @Body('role') role: string,
+  ) {
     return this.usersService.updateWhitelistedUserRole(id, role);
   }
 

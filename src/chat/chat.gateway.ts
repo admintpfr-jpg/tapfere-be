@@ -18,18 +18,23 @@ export class ChatGateway implements OnGatewayConnection {
 
   handleConnection(client: Socket) {
     // JWT token verification happens here eventually based on handshake auth token
-    const token = client.handshake.auth?.token || client.handshake.headers?.authorization;
+    const token =
+      client.handshake.auth?.token || client.handshake.headers?.authorization;
     console.log(`Client connected: ${client.id}`);
   }
 
   @SubscribeMessage('joinRoom')
-  handleJoinRoom(@MessageBody() conversationId: string, @ConnectedSocket() client: Socket) {
+  handleJoinRoom(
+    @MessageBody() conversationId: string,
+    @ConnectedSocket() client: Socket,
+  ) {
     client.join(conversationId);
   }
 
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
-    @MessageBody() payload: { conversationId: string; senderId: string; content: string },
+    @MessageBody()
+    payload: { conversationId: string; senderId: string; content: string },
     @ConnectedSocket() client: Socket,
   ) {
     const message = await this.chatService.createMessage(

@@ -1,4 +1,11 @@
-import { Controller, Get, Param, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  UseGuards,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ChatService } from './chat.service';
 
@@ -18,14 +25,19 @@ export class ChatController {
   }
 
   @Get('admin/user/:userId/conversations')
-  async getAdminConversations(@Param('userId') userId: string, @Req() req: any) {
-    if (req.user.role !== 'ADMIN') throw new ForbiddenException('Admin access required');
+  async getAdminConversations(
+    @Param('userId') userId: string,
+    @Req() req: any,
+  ) {
+    if (req.user.role !== 'ADMIN')
+      throw new ForbiddenException('Admin access required');
     return this.chatService.getConversationsAdmin(userId);
   }
 
   @Get('admin/support/conversations')
   async getSupportConversations(@Req() req: any) {
-    if (req.user.role !== 'ADMIN') throw new ForbiddenException('Admin access required');
+    if (req.user.role !== 'ADMIN')
+      throw new ForbiddenException('Admin access required');
     return this.chatService.getSupportConversations();
   }
 }

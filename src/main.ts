@@ -8,9 +8,13 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const origins = process.env.FRONTEND_URL?.split(',') || ['http://localhost:5173'];
+  const origins = process.env.FRONTEND_URL?.split(',') || [
+    'http://localhost:5173',
+  ];
   app.enableCors({ origin: origins, credentials: true });
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Physiotherapy Platform API')
@@ -18,7 +22,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-    
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 

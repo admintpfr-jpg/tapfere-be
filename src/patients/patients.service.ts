@@ -34,8 +34,8 @@ export class PatientsService {
     });
 
     // Merge: show all whitelisted, and use real User data if available
-    const merged = whitelisted.map(w => {
-      const user = users.find(u => u.email === w.email);
+    const merged = whitelisted.map((w) => {
+      const user = users.find((u) => u.email === w.email);
       if (user) return user;
       return {
         id: `pending-${w.id}`,
@@ -49,19 +49,29 @@ export class PatientsService {
     });
 
     // Add any Users that might not be in whitelist (legacy or direct add if any)
-    users.forEach(u => {
-      if (!merged.find(m => m.email === u.email)) {
+    users.forEach((u) => {
+      if (!merged.find((m) => m.email === u.email)) {
         merged.push(u);
       }
     });
 
-    return merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return merged.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   }
 
   async getTherapists() {
     const users = await this.prisma.user.findMany({
       where: { role: 'THERAPIST' },
-      select: { id: true, email: true, name: true, displayName: true, avatar: true, createdAt: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        displayName: true,
+        avatar: true,
+        createdAt: true,
+      },
       orderBy: { name: 'asc' },
     });
 
@@ -69,8 +79,8 @@ export class PatientsService {
       where: { role: 'THERAPIST' },
     });
 
-    const merged = whitelisted.map(w => {
-      const user = users.find(u => u.email === w.email);
+    const merged = whitelisted.map((w) => {
+      const user = users.find((u) => u.email === w.email);
       if (user) return user;
       return {
         id: `pending-${w.id}`,
@@ -83,8 +93,8 @@ export class PatientsService {
       };
     });
 
-    users.forEach(u => {
-      if (!merged.find(m => m.email === u.email)) {
+    users.forEach((u) => {
+      if (!merged.find((m) => m.email === u.email)) {
         merged.push(u);
       }
     });
@@ -111,8 +121,8 @@ export class PatientsService {
       where: { role: 'THERAPIST' },
     });
 
-    const merged = whitelisted.map(w => {
-      const user = users.find(u => u.email === w.email);
+    const merged = whitelisted.map((w) => {
+      const user = users.find((u) => u.email === w.email);
       if (user) return user;
       return {
         id: `pending-${w.id}`,
@@ -125,8 +135,8 @@ export class PatientsService {
       };
     });
 
-    users.forEach(u => {
-      if (!merged.find(m => m.email === u.email)) {
+    users.forEach((u) => {
+      if (!merged.find((m) => m.email === u.email)) {
         merged.push(u);
       }
     });
@@ -134,11 +144,20 @@ export class PatientsService {
     return merged;
   }
 
-  async assignTherapist(patientId: string, therapistId: string, patientVisibleName?: string, adminLabel?: string) {
-    const patient = await this.prisma.user.findUnique({ where: { id: patientId, role: 'CLIENT' } });
+  async assignTherapist(
+    patientId: string,
+    therapistId: string,
+    patientVisibleName?: string,
+    adminLabel?: string,
+  ) {
+    const patient = await this.prisma.user.findUnique({
+      where: { id: patientId, role: 'CLIENT' },
+    });
     if (!patient) throw new NotFoundException('Patient not found');
 
-    const therapist = await this.prisma.user.findUnique({ where: { id: therapistId, role: 'THERAPIST' } });
+    const therapist = await this.prisma.user.findUnique({
+      where: { id: therapistId, role: 'THERAPIST' },
+    });
     if (!therapist) throw new NotFoundException('Therapist not found');
 
     const existingAssignment = await this.prisma.assignment.findUnique({
@@ -164,7 +183,11 @@ export class PatientsService {
     }
 
     if (isNewAssignment) {
-      await this.sendAssignmentNotification(patient, therapist, patientVisibleName);
+      await this.sendAssignmentNotification(
+        patient,
+        therapist,
+        patientVisibleName,
+      );
     }
 
     return assignment;
@@ -177,7 +200,8 @@ export class PatientsService {
   ) {
     const systemUser = await this.usersService.ensureSystemUser();
 
-    const therapistDisplayName = patientVisibleName || therapist.displayName || therapist.name;
+    const therapistDisplayName =
+      patientVisibleName || therapist.displayName || therapist.name;
     const clientDisplayName = patient.displayName || patient.name;
 
     await this.sendSystemMessage(
@@ -193,7 +217,11 @@ export class PatientsService {
     );
   }
 
-  private async sendSystemMessage(systemUserId: string, targetUserId: string, content: string) {
+  private async sendSystemMessage(
+    systemUserId: string,
+    targetUserId: string,
+    content: string,
+  ) {
     let convo = await this.prisma.conversation.findFirst({
       where: {
         OR: [
@@ -212,7 +240,15 @@ export class PatientsService {
     const message = await this.prisma.message.create({
       data: { conversationId: convo.id, senderId: systemUserId, content },
       include: {
-        sender: { select: { id: true, name: true, avatar: true, displayName: true, role: true } },
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            displayName: true,
+            role: true,
+          },
+        },
       },
     });
 

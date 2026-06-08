@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 
@@ -19,7 +27,10 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res) {
     const { access_token } = this.authService.login(req.user);
-    res.cookie('access_token', access_token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
     return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
   }
 

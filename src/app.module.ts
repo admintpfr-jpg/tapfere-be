@@ -10,7 +10,15 @@ import { PatientsModule } from './patients/patients.module';
 import { AdminModule } from './admin/admin.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, ChatModule, WhitelistModule, PatientsModule, AdminModule],
+  imports: [
+    PrismaModule,
+    UsersModule,
+    AuthModule,
+    ChatModule,
+    WhitelistModule,
+    PatientsModule,
+    AdminModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
