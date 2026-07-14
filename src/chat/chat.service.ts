@@ -14,28 +14,29 @@ export class ChatService {
     senderId: string,
     content: string,
   ) {
-    const message = await this.prisma.message.create({
-      data: { conversationId, senderId, content },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-            displayName: true,
-            role: true,
+    const [message, convo] = await Promise.all([
+      this.prisma.message.create({
+        data: { conversationId, senderId, content },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+              displayName: true,
+              role: true,
+            },
           },
         },
-      },
-    });
-
-    const convo = await this.prisma.conversation.findUnique({
-      where: { id: conversationId },
-      include: {
-        client: true,
-        therapist: true,
-      },
-    });
+      }),
+      this.prisma.conversation.findUnique({
+        where: { id: conversationId },
+        include: {
+          client: true,
+          therapist: true,
+        },
+      }),
+    ]);
 
     if (convo) {
       const recipient =

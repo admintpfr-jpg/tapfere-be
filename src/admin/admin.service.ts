@@ -157,4 +157,128 @@ export class AdminService implements OnModuleInit {
     this.chatGateway.server.to(conversationId).emit('newMessage', message);
     return message;
   }
+
+  async getDashboardStats() {
+    const [
+      activeClientsCount,
+      activeTherapistsCount,
+      activeAssignments,
+      totalMessages,
+      totalConversations,
+      whitelist,
+    ] = await Promise.all([
+      this.prisma.user.count({ where: { role: 'CLIENT' } }),
+      this.prisma.user.count({ where: { role: 'THERAPIST' } }),
+      this.prisma.assignment.count(),
+      this.prisma.message.count(),
+      this.prisma.conversation.count(),
+      this.prisma.whitelistedUser.findMany(),
+    ]);
+
+    const users = await this.prisma.user.findMany({
+      select: { email: true },
+    });
+    const registeredEmails = new Set(users.map(u => u.email));
+
+    const pendingClients = whitelist.filter(
+      w => w.role === 'CLIENT' && !registeredEmails.has(w.email)
+    ).length;
+
+    const pendingTherapists = whitelist.filter(
+      w => w.role === 'THERAPIST' && !registeredEmails.has(w.email)
+    ).length;
+
+    const totalPatients = activeClientsCount + pendingClients;
+    const totalTherapists = activeTherapistsCount + pendingTherapists;
+
+    const therapists = await this.prisma.user.findMany({
+      where: { role: 'THERAPIST' },
+      select: {
+        id: true,
+        name: true,
+        displayName: true,
+        avatar: true,
+        therapistAssignments: {
+          select: { id: true },
+        },
+      },
+    });
+
+    const workloadDistribution = therapists.map(t => ({
+      id: t.id,
+      name: t.displayName || t.name,
+      avatar: t.avatar,
+      assignedCount: t.therapistAssignments.length,
+    })).sort((a, b) => b.assignedCount - a.assignedCount);
+
+    const roleDistribution = {
+      ADMIN: await this.prisma.user.count({ where: { role: 'ADMIN' } }),
+      THERAPIST: activeTherapistsCount,
+      CLIENT: activeClientsCount,
+    };
+
+    const [recentUsers, recentAssignments, recentMessages] = await Promise.all([
+      this.prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { id: true, name: true, email: true, role: true, createdAt: true },
+      }),
+      this.prisma.assignment.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          patient: { select: { name: true, displayName: true } },
+          therapist: { select: { name: true, displayName: true } },
+        },
+      }),
+      this.prisma.message.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          sender: { select: { name: true, displayName: true, role: true } },
+        },
+      }),
+    ]);
+
+    const activities = [
+      ...recentUsers.map(u => ({
+        id: `user-${u.id}`,
+        type: 'REGISTRATION',
+        title: 'New User Registered',
+        description: `${u.name} registered as a ${u.role.toLowerCase()}`,
+        time: u.createdAt,
+      })),
+      ...recentAssignments.map(a => ({
+        id: `assign-${a.id}`,
+        type: 'ASSIGNMENT',
+        title: 'Therapist Assigned',
+        description: `${a.therapist.displayName || a.therapist.name} was assigned to ${a.patient.displayName || a.patient.name}`,
+        time: a.createdAt,
+      })),
+      ...recentMessages.map(m => ({
+        id: `msg-${m.id}`,
+        type: 'MESSAGE',
+        title: 'New Chat Message',
+        description: `${m.sender.displayName || m.sender.name} sent: "${m.content.slice(0, 30)}${m.content.length > 30 ? '...' : ''}"`,
+        time: m.createdAt,
+      })),
+    ]
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      .slice(0, 10);
+
+    return {
+      totalPatients,
+      activePatients: activeClientsCount,
+      pendingPatients: pendingClients,
+      totalTherapists,
+      activeTherapists: activeTherapistsCount,
+      pendingTherapists,
+      activeAssignments,
+      totalMessages,
+      totalConversations,
+      workloadDistribution,
+      roleDistribution,
+      activities,
+    };
+  }
 }
