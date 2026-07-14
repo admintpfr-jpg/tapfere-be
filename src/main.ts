@@ -1,5 +1,9 @@
 import { config } from 'dotenv';
-config({ override: true });
+// Load .env for local dev only. In production (Railway/hosted) the platform
+// injects real env vars — never let a stray .env override them.
+if (process.env.NODE_ENV !== 'production') {
+  config();
+}
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
