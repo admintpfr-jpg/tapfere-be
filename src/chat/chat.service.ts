@@ -102,6 +102,7 @@ export class ChatService {
             avatar: true,
             displayName: true,
             email: true,
+            isActive: true,
           },
         },
         client: {
@@ -111,6 +112,7 @@ export class ChatService {
             avatar: true,
             displayName: true,
             email: true,
+            isActive: true,
           },
         },
         messages: {
@@ -165,6 +167,7 @@ export class ChatService {
             avatar: true,
             displayName: true,
             email: true,
+            isActive: true,
           },
         },
         client: {
@@ -174,6 +177,7 @@ export class ChatService {
             avatar: true,
             displayName: true,
             email: true,
+            isActive: true,
           },
         },
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
@@ -197,6 +201,7 @@ export class ChatService {
             avatar: true,
             displayName: true,
             email: true,
+            isActive: true,
           },
         },
         client: {
@@ -206,6 +211,7 @@ export class ChatService {
             avatar: true,
             displayName: true,
             email: true,
+            isActive: true,
           },
         },
         messages: {

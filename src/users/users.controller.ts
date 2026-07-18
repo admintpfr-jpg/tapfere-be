@@ -34,8 +34,14 @@ export class UsersController {
   @Post('whitelist')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('ADMIN')
-  async addWhitelistedUser(@Body() body: { email: string; role: string }) {
-    return this.usersService.addWhitelistedUser(body.email, body.role);
+  async addWhitelistedUser(
+    @Body() body: { email: string; role: string; displayName?: string },
+  ) {
+    return this.usersService.addWhitelistedUser(
+      body.email,
+      body.role,
+      body.displayName,
+    );
   }
 
   @Delete('whitelist/:id')

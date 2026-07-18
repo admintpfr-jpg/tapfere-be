@@ -86,6 +86,8 @@ export class UsersService {
           googleId,
           avatar,
           lastLogin: new Date(),
+          // Passing the whitelist check means the account is active again.
+          isActive: true,
           // Sync displayName if it was updated in whitelist but not user profile
           ...(whitelistedUser.displayName && {
             displayName: whitelistedUser.displayName,
@@ -201,6 +203,12 @@ export class UsersService {
     });
     if (existing)
       throw new UnauthorizedException('User is already whitelisted.');
+
+    // Re-whitelisting a previously removed user reactivates their account.
+    await this.prisma.user
+      .update({ where: { email }, data: { isActive: true } })
+      .catch(() => null);
+
     return this.prisma.whitelistedUser.create({
       data: {
         email,
@@ -211,7 +219,22 @@ export class UsersService {
   }
 
   async removeWhitelistedUser(id: string) {
-    return this.prisma.whitelistedUser.delete({ where: { id } });
+    const removed = await this.prisma.whitelistedUser.delete({ where: { id } });
+
+    // Mark the linked account as deactivated so it can be flagged in chats.
+    const account = await this.prisma.user.update({
+      where: { email: removed.email },
+      data: { isActive: false },
+    }).catch(() => null);
+    const recipientName =
+      removed.displayName || account?.name || removed.email.split('@')[0];
+    this.mailService
+      .sendAccountDeactivationEmail(removed.email, recipientName)
+      .catch(() => {
+        // Error already logged by MailService, caught to prevent unhandled rejection
+      });
+
+    return removed;
   }
 
   async updateWhitelistedUserRole(id: string, role: string) {
