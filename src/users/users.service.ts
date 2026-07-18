@@ -1,11 +1,15 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class UsersService {
   private readonly SYSTEM_EMAIL = 'support@tapfere.com';
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService,
+  ) {}
 
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
@@ -63,6 +67,17 @@ export class UsersService {
           lastLogin: new Date(),
         },
       });
+
+      // Newly onboarded user: send a welcome email (fire-and-forget)
+      this.mailService
+        .sendOnboardingEmail(
+          user.email,
+          user.displayName || user.name,
+          user.role,
+        )
+        .catch(() => {
+          // Error already logged by MailService, caught to prevent unhandled rejection
+        });
     } else {
       // Update google ID, avatar, and lastLogin
       user = await this.prisma.user.update({

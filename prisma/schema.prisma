@@ -17,6 +17,7 @@ model User {
   updatedAt              DateTime       @updatedAt
   displayName            String?
   lastLogin              DateTime?      @default(now())
+  lastSeen               DateTime?
   patientAssignments     Assignment[]   @relation("PatientAssignments")
   therapistAssignments   Assignment[]   @relation("TherapistAssignments")
   clientConversations    Conversation[] @relation("ClientConversations")
@@ -36,13 +37,16 @@ model Conversation {
 }
 
 model Message {
-  id             String       @id @default(uuid())
+  id             String        @id @default(uuid())
   conversationId String
   senderId       String
   content        String
-  createdAt      DateTime     @default(now())
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-  sender         User         @relation(fields: [senderId], references: [id])
+  status         MessageStatus @default(SENT)
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime      @default(now())
+  conversation   Conversation  @relation(fields: [conversationId], references: [id])
+  sender         User          @relation(fields: [senderId], references: [id])
 }
 
 model Assignment {
@@ -78,4 +82,10 @@ enum Role {
   ADMIN
   THERAPIST
   CLIENT
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
 }

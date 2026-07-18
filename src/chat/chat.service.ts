@@ -216,6 +216,93 @@ export class ChatService {
     });
   }
 
+  // Returns the two participant ids of a conversation, or null if not found.
+  async getParticipants(
+    conversationId: string,
+  ): Promise<{ clientId: string; therapistId: string } | null> {
+    return this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { clientId: true, therapistId: true },
+    });
+  }
+
+  // Mark specific messages as DELIVERED (only those still in SENT state).
+  async markMessagesDelivered(messageIds: string[]) {
+    if (messageIds.length === 0) return;
+    await this.prisma.message.updateMany({
+      where: { id: { in: messageIds }, status: 'SENT' },
+      data: { status: 'DELIVERED', deliveredAt: new Date() },
+    });
+  }
+
+  // When a user comes online, flip every message addressed to them that is
+  // still SENT to DELIVERED. Returns the affected messages so the gateway can
+  // notify each conversation's sender.
+  async markIncomingDelivered(
+    userId: string,
+  ): Promise<{ id: string; conversationId: string }[]> {
+    const convos = await this.prisma.conversation.findMany({
+      where: { OR: [{ clientId: userId }, { therapistId: userId }] },
+      select: { id: true },
+    });
+    const convoIds = convos.map((c) => c.id);
+    if (convoIds.length === 0) return [];
+
+    const msgs = await this.prisma.message.findMany({
+      where: {
+        conversationId: { in: convoIds },
+        senderId: { not: userId },
+        status: 'SENT',
+      },
+      select: { id: true, conversationId: true },
+    });
+    if (msgs.length === 0) return [];
+
+    await this.prisma.message.updateMany({
+      where: { id: { in: msgs.map((m) => m.id) } },
+      data: { status: 'DELIVERED', deliveredAt: new Date() },
+    });
+    return msgs;
+  }
+
+  // Mark all messages in a conversation NOT sent by the reader as READ.
+  // Returns the ids that changed so the sender's ticks can turn blue.
+  async markConversationRead(
+    conversationId: string,
+    readerId: string,
+  ): Promise<string[]> {
+    const msgs = await this.prisma.message.findMany({
+      where: {
+        conversationId,
+        senderId: { not: readerId },
+        status: { not: 'READ' },
+      },
+      select: { id: true },
+    });
+    if (msgs.length === 0) return [];
+
+    const ids = msgs.map((m) => m.id);
+    await this.prisma.message.updateMany({
+      where: { id: { in: ids } },
+      data: { status: 'READ', readAt: new Date() },
+    });
+    return ids;
+  }
+
+  async setUserOffline(userId: string) {
+    await this.prisma.user
+      .update({ where: { id: userId }, data: { lastSeen: new Date() } })
+      .catch(() => undefined);
+  }
+
+  async getLastSeen(userId: string): Promise<Date | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { lastSeen: true },
+    });
+    return user?.lastSeen ?? null;
+  }
+
   async getMessages(conversationId: string, viewerId?: string) {
     const messages = await this.prisma.message.findMany({
       where: { conversationId },
